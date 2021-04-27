@@ -7,35 +7,35 @@ import env from "../enviroment/env";
 
 const userSchema = new mongoose.Schema({
 
-    name: 
+    name:
         {
-            type:String,
+            type: String,
         },
     email: {
         type: String,
         required: true,
         trim: true,
-        unique: true, 
+        unique: true,
         lowercase: true,
         validate(value: any): any {
             if (!validator.isEmail(value)) {
                 throw new Error("Email is invalid");
             }
         }
-    }, 
+    },
     password: {
-        type: String, 
-        trim: true, 
-        required: true, 
+        type: String,
+        trim: true,
+        required: true,
         validate(value: any): any {
             if (value.length < 6) {
                 throw new Error("Password Length Not Sufficent");
             }
         }
     },
-    tokens:[{
+    tokens: [{
         token: {
-            type: String, 
+            type: String,
             required: true
         },
         uuid: {
@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema({
     }],
     tempTokens: [{
         token: {
-            type: String, 
+            type: String,
             required: true
         },
         uuid: {
@@ -62,10 +62,10 @@ const userSchema = new mongoose.Schema({
         }
     }],
     privateKey: {
-        type: String, 
+        type: String,
     },
     publicKey: {
-        type: String, 
+        type: String,
     },
     emailVerified: {
         type: Boolean
@@ -100,7 +100,7 @@ const userSchema = new mongoose.Schema({
     s3Data: {
         id: {
             type: String
-        }, 
+        },
         key: {
             type: String
         },
@@ -175,7 +175,7 @@ export interface UserInterface extends Document {
         storageSize?: number,
         storageLimit?: number,
         failed?: boolean,
-    }, 
+    },
     activeSubscription?: boolean,
     passwordLastModified?: number,
     personalStorageCanceledDate?: number,
@@ -188,28 +188,28 @@ export interface UserInterface extends Document {
     encryptToken: (tempToken: any, key: any, publicKey: any) => any;
     decryptToken: (encryptedToken: any, key: any, publicKey: any) => any;
     findByCreds: (email: string, password: string) => Promise<UserInterface>;
-    generateAuthToken: (uuid: string | undefined) => Promise<{accessToken: string, refreshToken: string}>
+    generateAuthToken: (uuid: string | undefined) => Promise<{ accessToken: string, refreshToken: string }>
     generateAuthTokenStreamVideo: (uuid: string | undefined) => Promise<string>
     generateEncryptionKeys: () => Promise<void>;
-    changeEncryptionKey: (randomKey: Buffer) => Promise<void>; 
+    changeEncryptionKey: (randomKey: Buffer) => Promise<void>;
     generateEmailVerifyToken: () => Promise<string>;
     generatePasswordResetToken: () => Promise<string>;
-    encryptDriveIDandKey: (ID:string, key: string) => Promise<void>; 
-    decryptDriveIDandKey: () => Promise<{clientID: string, clientKey: string}>;
+    encryptDriveIDandKey: (ID: string, key: string) => Promise<void>;
+    decryptDriveIDandKey: () => Promise<{ clientID: string, clientKey: string }>;
     encryptDriveTokenData: (token: Object) => Promise<void>;
     decryptDriveTokenData: () => Promise<any>;
     encryptS3Data: (id: string, key: string, bucket: string) => Promise<void>;
-    decryptS3Data: () => Promise<{id: string, key: string, bucket: string}>
+    decryptS3Data: () => Promise<{ id: string, key: string, bucket: string }>
 }
 
-const maxAgeAccess =  60 * 1000 * 20 + (1000 * 60);
+const maxAgeAccess = 60 * 1000 * 20 + (1000 * 60);
 const maxAgeRefresh = 60 * 1000 * 60 * 24 * 30 + (1000 * 60);
 
 const maxAgeAccessStreamVideo = 60 * 1000 * 60 * 24;
 
-userSchema.pre("save", async function(this: any, next: any) {
-    
-    const user = this; 
+userSchema.pre("save", async function (this: any, next: any) {
+
+    const user = this;
 
     if (user.isModified("password")) {
         user.password = await bcrypt.hash(user.password, 8);
@@ -218,12 +218,9 @@ userSchema.pre("save", async function(this: any, next: any) {
     next();
 })
 
-userSchema.statics.findByCreds = async(email: string, password: string) => {
-
+userSchema.statics.findByCreds = async (email: string, password: string) => {
     const user = await User.findOne({email});
-
     if (!user) {
-
         throw new Error("User not found")
     }
 
@@ -236,7 +233,7 @@ userSchema.statics.findByCreds = async(email: string, password: string) => {
     return user;
 }
 
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
 
     const user = this;
 
@@ -251,7 +248,7 @@ userSchema.methods.toJSON = function() {
     return userObject;
 }
 
-userSchema.methods.generateAuthTokenStreamVideo = async function(uuid: string | undefined) {
+userSchema.methods.generateAuthTokenStreamVideo = async function (uuid: string | undefined) {
 
     const iv = crypto.randomBytes(16);
 
@@ -259,8 +256,12 @@ userSchema.methods.generateAuthTokenStreamVideo = async function(uuid: string | 
 
     const date = new Date();
     const time = date.getTime();
-    
-    let accessTokenStreamVideo = jwt.sign({_id:user._id.toString(), iv, time}, env.passwordAccess!, {expiresIn: maxAgeAccessStreamVideo.toString()});
+
+    let accessTokenStreamVideo = jwt.sign({
+        _id: user._id.toString(),
+        iv,
+        time
+    }, env.passwordAccess!, {expiresIn: maxAgeAccessStreamVideo.toString()});
 
     const encryptionKey = user.getEncryptionKey();
 
@@ -273,8 +274,7 @@ userSchema.methods.generateAuthTokenStreamVideo = async function(uuid: string | 
     return accessTokenStreamVideo;
 }
 
-userSchema.methods.generateAuthToken = async function(uuid: string | undefined) {
-
+userSchema.methods.generateAuthToken = async function (uuid: string | undefined) {
     const iv = crypto.randomBytes(16);
 
     const user = this;
@@ -282,10 +282,20 @@ userSchema.methods.generateAuthToken = async function(uuid: string | undefined) 
     const date = new Date();
     const time = date.getTime();
 
-    const userObj = {_id: user._id, emailVerified: user.emailVerified || env.disableEmailVerification, email: user.email, s3Enabled: user.s3Enabled, googleDriveEnabled: user.googleDriveEnabled}
-    
+    const userObj = {
+        _id: user._id,
+        emailVerified: user.emailVerified || env.disableEmailVerification,
+        email: user.email,
+        s3Enabled: user.s3Enabled,
+        googleDriveEnabled: user.googleDriveEnabled
+    }
+
     let accessToken = jwt.sign({user: userObj, iv}, env.passwordAccess!, {expiresIn: maxAgeAccess.toString()});
-    let refreshToken = jwt.sign({_id:user._id.toString(), iv, time}, env.passwordRefresh!, {expiresIn: maxAgeRefresh.toString()});
+    let refreshToken = jwt.sign({
+        _id: user._id.toString(),
+        iv,
+        time
+    }, env.passwordRefresh!, {expiresIn: maxAgeRefresh.toString()});
 
     const encryptionKey = user.getEncryptionKey();
 
@@ -303,7 +313,7 @@ userSchema.methods.generateAuthToken = async function(uuid: string | undefined) 
 
     // const iv = crypto.randomBytes(16);
 
-    // const user = this; 
+    // const user = this;
     // let token = jwt.sign({_id:user._id.toString(), iv}, env.passwordAccess!);
 
     // const encryptionKey = user.getEncryptionKey();
@@ -316,7 +326,7 @@ userSchema.methods.generateAuthToken = async function(uuid: string | undefined) 
     // return token;
 }
 
-userSchema.methods.encryptToken = function(token: string, key: string, iv: any) {
+userSchema.methods.encryptToken = function (token: string, key: string, iv: any) {
 
     iv = Buffer.from(iv, "hex")
 
@@ -324,23 +334,24 @@ userSchema.methods.encryptToken = function(token: string, key: string, iv: any) 
     const cipher = crypto.createCipheriv('aes-256-cbc', TOKEN_CIPHER_KEY, iv);
     const encryptedText = cipher.update(token);
 
-    return Buffer.concat([encryptedText, cipher.final()]).toString("hex");;
+    return Buffer.concat([encryptedText, cipher.final()]).toString("hex");
+    ;
 }
 
-userSchema.methods.decryptToken = function(encryptedToken: any, key: string, iv: any) {
+userSchema.methods.decryptToken = function (encryptedToken: any, key: string, iv: any) {
 
     encryptedToken = Buffer.from(encryptedToken, "hex");
     iv = Buffer.from(iv, "hex")
 
-    const TOKEN_CIPHER_KEY = crypto.createHash('sha256').update(key).digest();  
+    const TOKEN_CIPHER_KEY = crypto.createHash('sha256').update(key).digest();
     const decipher = crypto.createDecipheriv('aes-256-cbc', TOKEN_CIPHER_KEY, iv)
-    
+
     const tokenDecrypted = decipher.update(encryptedToken);
 
     return Buffer.concat([tokenDecrypted, decipher.final()]).toString();
 }
 
-userSchema.methods.generateEncryptionKeys = async function() {
+userSchema.methods.generateEncryptionKeys = async function () {
 
     const user = this;
     const userPassword = user.password;
@@ -364,7 +375,7 @@ userSchema.methods.generateEncryptionKeys = async function() {
     await user.save();
 }
 
-userSchema.methods.getEncryptionKey = function() {
+userSchema.methods.getEncryptionKey = function () {
 
     try {
         const user = this;
@@ -394,7 +405,7 @@ userSchema.methods.getEncryptionKey = function() {
     }
 }
 
-userSchema.methods.changeEncryptionKey = async function(randomKey: Buffer) {
+userSchema.methods.changeEncryptionKey = async function (randomKey: Buffer) {
 
     const user = this;
     const userPassword = user.password;
@@ -416,12 +427,12 @@ userSchema.methods.changeEncryptionKey = async function(randomKey: Buffer) {
     await user.save();
 }
 
-userSchema.methods.generateTempAuthToken = async function() {
+userSchema.methods.generateTempAuthToken = async function () {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this as UserInterface; 
-    const token = jwt.sign({_id:user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "3000ms"});
+    const user = this as UserInterface;
+    const token = jwt.sign({_id: user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "3000ms"});
 
     const encryptionKey = user.getEncryptionKey();
     const encryptedToken = user.encryptToken(token, encryptionKey, iv);
@@ -432,12 +443,12 @@ userSchema.methods.generateTempAuthToken = async function() {
     return token;
 }
 
-userSchema.methods.generateEmailVerifyToken = async function() {
+userSchema.methods.generateEmailVerifyToken = async function () {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this as UserInterface; 
-    const token = jwt.sign({_id:user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "1d"});
+    const user = this as UserInterface;
+    const token = jwt.sign({_id: user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "1d"});
 
     const encryptionKey = user.getEncryptionKey();
     const encryptedToken = user.encryptToken(token, encryptionKey, iv);
@@ -448,17 +459,17 @@ userSchema.methods.generateEmailVerifyToken = async function() {
     return token;
 }
 
-userSchema.methods.encryptDriveIDandKey = async function(ID: string, key: string) {
+userSchema.methods.encryptDriveIDandKey = async function (ID: string, key: string) {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this as UserInterface; 
-    
+    const user = this as UserInterface;
+
     const encryptedKey = user.getEncryptionKey();
 
     const encryptedDriveID = user.encryptToken(ID, encryptedKey, iv);
     const encryptedDriveKey = user.encryptToken(key, encryptedKey, iv);
-    
+
     if (!user.googleDriveData) user.googleDriveData = {};
 
     user.googleDriveData!.id = encryptedDriveID;
@@ -468,10 +479,10 @@ userSchema.methods.encryptDriveIDandKey = async function(ID: string, key: string
     await user.save();
 }
 
-userSchema.methods.decryptDriveIDandKey = async function() {
-    
-    const user = this as UserInterface; 
-    
+userSchema.methods.decryptDriveIDandKey = async function () {
+
+    const user = this as UserInterface;
+
     const iv = user.googleDriveData!.iv;
 
     const encryptedKey = user.getEncryptionKey();
@@ -481,24 +492,25 @@ userSchema.methods.decryptDriveIDandKey = async function() {
 
     const decryptedDriveID = user.decryptToken(encryptedDriveID, encryptedKey, iv)
     const decryptedDriveKey = user.decryptToken(encryptedDriveKey, encryptedKey, iv);
-    
-   return {
-       clientID: decryptedDriveID, 
-       clientKey: decryptedDriveKey
-   }
+
+    return {
+        clientID: decryptedDriveID,
+        clientKey: decryptedDriveKey
+    }
 }
 
-userSchema.methods.encryptDriveTokenData = async function(token: Object) {
-    
-    const user = this as UserInterface; 
+userSchema.methods.encryptDriveTokenData = async function (token: Object) {
+
+    const user = this as UserInterface;
     const iv = user.googleDriveData?.iv;
 
     const tokenToString = JSON.stringify(token);
-    
+
     const encryptedKey = user.getEncryptionKey();
 
-    const encryptedDriveToken = user.encryptToken(tokenToString, encryptedKey, iv);;
-    
+    const encryptedDriveToken = user.encryptToken(tokenToString, encryptedKey, iv);
+    ;
+
     if (!user.googleDriveData) user.googleDriveData = {};
 
     user.googleDriveData.token = encryptedDriveToken;
@@ -507,10 +519,10 @@ userSchema.methods.encryptDriveTokenData = async function(token: Object) {
     await user.save();
 }
 
-userSchema.methods.decryptDriveTokenData = async function() {
-    
-    const user = this as UserInterface; 
-    
+userSchema.methods.decryptDriveTokenData = async function () {
+
+    const user = this as UserInterface;
+
     const iv = user.googleDriveData!.iv;
 
     const encryptedKey = user.getEncryptionKey();
@@ -520,22 +532,22 @@ userSchema.methods.decryptDriveTokenData = async function() {
     const decryptedToken = user.decryptToken(encryptedToken, encryptedKey, iv);
 
     const tokenToObj = JSON.parse(decryptedToken);
-    
-   return tokenToObj;
+
+    return tokenToObj;
 }
 
-userSchema.methods.encryptS3Data = async function(ID: string, key: string, bucket: string) {
+userSchema.methods.encryptS3Data = async function (ID: string, key: string, bucket: string) {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this as UserInterface; 
-    
+    const user = this as UserInterface;
+
     const encryptedKey = user.getEncryptionKey();
 
     const encryptedS3ID = user.encryptToken(ID, encryptedKey, iv);
     const encryptedS3Key = user.encryptToken(key, encryptedKey, iv);
     const encryptedS3Bucket = user.encryptToken(bucket, encryptedKey, iv);
-    
+
     if (!user.s3Data) user.s3Data = {};
 
     user.s3Data!.id = encryptedS3ID;
@@ -547,9 +559,9 @@ userSchema.methods.encryptS3Data = async function(ID: string, key: string, bucke
     await user.save();
 }
 
-userSchema.methods.decryptS3Data = async function() {
+userSchema.methods.decryptS3Data = async function () {
 
-    const user = this as UserInterface; 
+    const user = this as UserInterface;
 
     const iv = user.s3Data?.iv;
 
@@ -572,12 +584,12 @@ userSchema.methods.decryptS3Data = async function() {
     }
 }
 
-userSchema.methods.generatePasswordResetToken = async function() {
+userSchema.methods.generatePasswordResetToken = async function () {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this as UserInterface; 
-    const token = jwt.sign({_id:user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "1h"});
+    const user = this as UserInterface;
+    const token = jwt.sign({_id: user._id.toString(), iv}, env.passwordAccess!, {expiresIn: "1h"});
 
     const encryptionKey = user.getEncryptionKey();
     const encryptedToken = user.encryptToken(token, encryptionKey, iv);
@@ -588,18 +600,18 @@ userSchema.methods.generatePasswordResetToken = async function() {
     return token;
 }
 
-userSchema.methods.generateTempAuthTokenVideo = async function(cookie: string) {
+userSchema.methods.generateTempAuthTokenVideo = async function (cookie: string) {
 
     const iv = crypto.randomBytes(16);
 
-    const user = this; 
-    const token = jwt.sign({_id:user._id.toString(), cookie, iv}, env.passwordAccess!, {expiresIn:"5h"});
+    const user = this;
+    const token = jwt.sign({_id: user._id.toString(), cookie, iv}, env.passwordAccess!, {expiresIn: "5h"});
 
     const encryptionKey = user.getEncryptionKey();
     const encryptedToken = user.encryptToken(token, encryptionKey, iv);
-    
+
     user.tempTokens = user.tempTokens.concat({token: encryptedToken});
-    
+
     await user.save();
     return token;
 }

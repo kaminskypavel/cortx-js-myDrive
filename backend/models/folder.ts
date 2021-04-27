@@ -1,19 +1,19 @@
 import mongoose, {Document} from "mongoose";
 
 const folderSchema = new mongoose.Schema({
-    
+
     name: {
-        type: String, 
+        type: String,
         required: true,
     },
-    
+
     parent: {
-        type: String, 
+        type: String,
         required: true,
     },
-    
+
     owner: {
-        type: String, 
+        type: String,
         required: true
     },
 
@@ -22,11 +22,12 @@ const folderSchema = new mongoose.Schema({
         required:true
     },
     personalFolder: Boolean
-    
+
 }, {
     timestamps: true
 })
 
+// @ts-ignore
 export interface FolderInterface extends Document {
     name: string,
     parent: string,
@@ -38,6 +39,7 @@ export interface FolderInterface extends Document {
     personalFolder?: boolean
 }
 
+// @ts-ignore
 const Folder = mongoose.model<FolderInterface>("Folder", folderSchema);
 
 export default Folder;

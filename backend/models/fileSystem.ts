@@ -1,13 +1,13 @@
 import mongoose, {Document} from "mongoose";
 
 const fileSystemSchema = new mongoose.Schema({
-    
+
     name: {
-        type: String, 
+        type: String,
         required: true,
     },
     owner: {
-        type: String, 
+        type: String,
         required: true
     },
     path: {
@@ -45,11 +45,12 @@ const fileSystemSchema = new mongoose.Schema({
         type: Buffer,
         required: true
     }
-    
+
 }, {
     timestamps: true
 })
 
+// @ts-ignore
 export interface FileSystemInterface extends Document {
     name: string,
     owner: string,
@@ -64,6 +65,7 @@ export interface FileSystemInterface extends Document {
     IV: Buffer
 }
 
+// @ts-ignore
 const FileSystem = mongoose.model<FileSystemInterface>("FileSystem", fileSystemSchema);
 
 export default FileSystem;
