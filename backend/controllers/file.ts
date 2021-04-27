@@ -44,18 +44,18 @@ class FileController {
 
             return;
         }
-    
+
         try {
-            
-    
+
+
             const user = req.user;
             const id = req.params.id;
-    
+
             const decryptedThumbnail = await this.chunkService.getThumbnail(user, id);
-        
+
 
             res.send(decryptedThumbnail);
-    
+
         } catch (e) {
 
             console.log("\nGet Thumbnail Error File Route:", e.message);
@@ -89,21 +89,21 @@ class FileController {
     uploadFile = async(req: RequestTypeFullUser, res: Response) => {
 
         if (!req.user) {
-        
-            return 
+
+            return
         }
-    
+
         try {
 
             const user = req.user;
             const busboy = req.busboy;
-            
+
             req.pipe(busboy);
-    
+
             const file = await this.chunkService.uploadFile(user, busboy, req);
-         
+
             res.send(file);
-            
+
         } catch (e) {
 
             console.log("\nUploading File Error File Route:", e.message);
@@ -119,15 +119,15 @@ class FileController {
 
             const ID = req.params.id;
             const tempToken = req.params.tempToken;
-    
+
             await this.chunkService.getPublicDownload(ID, tempToken, res);
-    
+
         } catch (e) {
-    
+
             console.log("\nGet Public Download Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
-        } 
+        }
     }
 
     removeLink = async(req: RequestType, res: Response) => {
@@ -135,16 +135,16 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const id = req.params.id;
             const userID = req.user._id;
-    
+
             await fileService.removeLink(userID, id)
-    
+
             res.send();
-    
+
         } catch (e) {
 
             console.log("\nRemove Public Link Error File Route:", e.message);
@@ -159,18 +159,18 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
 
             const fileID = req.params.id;
             const userID = req.user._id;
-    
+
             const token = await fileService.makePublic(userID, fileID);
 
             res.send(token);
-    
+
         } catch (e) {
-            
+
             console.log("\nMake Public Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -183,13 +183,13 @@ class FileController {
 
             const id = req.params.id;
             const tempToken = req.params.tempToken;
-            
+
             const file = await fileService.getPublicInfo(id, tempToken);
 
             res.send(file);
-    
+
         } catch (e) {
-            
+
             console.log("\nGet Public Info Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -201,18 +201,18 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const id = req.params.id;
             const userID = req.user._id;
-            
+
             const token = await fileService.makeOneTimePublic(userID, id);
 
             res.send(token);
 
         } catch (e) {
-            
+
             console.log("\nMake One Time Public Link Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -225,40 +225,40 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const fileID = req.params.id;
             const userID = req.user._id;
-    
+
             const file = await fileService.getFileInfo(userID, fileID);
-    
+
             res.send(file);
-    
+
         } catch (e) {
-            
+
             console.log("\nGet File Info Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
         }
     }
 
-    getQuickList = async(req: RequestType, res: Response) => { 
+    getQuickList = async(req: RequestType, res: Response) => {
 
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const user = req.user;
 
             const quickList = await fileService.getQuickList(user);
 
             res.send(quickList);
-    
+
         } catch (e) {
-            
+
             console.log("\nGet Quick List Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -270,18 +270,18 @@ class FileController {
         if (!req.user) {
             return
         }
-    
+
         try {
 
             const user = req.user;
             const query = req.query;
-            
+
             const fileList = await fileService.getList(user, query);
 
             res.send(fileList);
-    
+
         } catch (e) {
-            
+
             console.log("\nGet File List Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -291,19 +291,19 @@ class FileController {
     getDownloadToken = async(req: RequestTypeFullUser, res: Response) => {
 
         if (!req.user) {
-            return 
+            return
         }
-    
+
         try {
 
             const user = req.user;
 
             const tempToken = await fileService.getDownloadToken(user);
-    
+
             res.send({tempToken});
-    
+
         } catch (e) {
-            
+
             console.log("\nGet Download Token Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -364,18 +364,18 @@ class FileController {
     // getDownloadTokenVideo = async(req: RequestTypeFullUser, res: Response) => {
 
     //     if (!req.user) {
-    //         return 
+    //         return
     //     }
-    
+
     //     try {
-    
+
     //         const user = req.user;
     //         const cookie = req.headers.uuid as string;
-    
+
     //         const tempToken = await fileService.getDownloadTokenVideo(user, cookie);
-    
+
     //         res.send({tempToken});
-    
+
     //     } catch (e) {
 
     //         const code = e.code || 500;
@@ -388,9 +388,9 @@ class FileController {
     removeTempToken = async(req: RequestTypeFullUser, res: Response) => {
 
         if (!req.user) {
-            return 
+            return
         }
-    
+
         try {
 
             const user = req.user
@@ -400,7 +400,7 @@ class FileController {
             await fileService.removeTempToken(user, tempToken, currentUUID);
 
             res.send();
-            
+
         } catch (e) {
 
             console.log("\nRemove Temp Token Error File Route:", e.message);
@@ -414,9 +414,9 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const user = req.user;
             const fileID = req.params.id;
             const headers = req.headers;
@@ -437,20 +437,20 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const user = req.user;
             const fileID = req.params.id;
 
             await this.chunkService.downloadFile(user, fileID, res);
-    
+
         } catch (e) {
-            
+
             console.log("\nDownload File Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
-        } 
+        }
     }
 
     getSuggestedList = async(req: RequestType, res: Response) => {
@@ -458,19 +458,19 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const userID = req.user._id;
             let searchQuery = req.query.search || "";
-    
+
             const {fileList, folderList} = await fileService.getSuggestedList(userID, searchQuery);
-    
+
             return res.send({folderList, fileList})
-    
-    
+
+
         } catch (e) {
-    
+
             console.log("\nGet Suggested List Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -482,24 +482,24 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const fileID = req.body.id;
             const title = req.body.title
             const userID = req.user._id;
-    
+
             await fileService.renameFile(userID, fileID, title)
 
             res.send();
-            
+
         } catch (e) {
-    
+
             console.log("\nRename File Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
         }
-    
+
     }
 
     sendEmailShare = async(req: RequestType, res: Response) => {
@@ -509,20 +509,20 @@ class FileController {
         }
 
         try {
-            
+
             const user = req.user!;
-        
+
             const fileID = req.body.file._id;
             const respient = req.body.file.resp;
-        
+
             const file = await fileService.getFileInfo(user._id, fileID);
-        
+
             await sendShareEmail(file, respient)
-        
+
             res.send()
 
         } catch (e) {
-           
+
             console.log("\nSend Share Email Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -534,9 +534,9 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const fileID = req.body.id;
             const userID = req.user._id;
             const parentID = req.body.parent;
@@ -544,9 +544,9 @@ class FileController {
             await fileService.moveFile(userID, fileID, parentID);
 
             res.send();
-            
+
         } catch (e) {
-    
+
             console.log("\nMove File Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -559,18 +559,18 @@ class FileController {
         if (!req.user) {
             return;
         }
-    
+
         try {
-    
+
             const userID = req.user._id;
             const fileID = req.body.id;
-    
+
             await this.chunkService.deleteFile(userID, fileID);
-    
+
             res.send()
-    
+
         } catch (e) {
-            
+
             console.log("\nDelete File Error File Route:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();

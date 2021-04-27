@@ -3350,6 +3350,11 @@ cors@latest:
     object-assign "^4"
     vary "^1"
 
+cortx-js-sdk@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/cortx-js-sdk/-/cortx-js-sdk-1.0.0.tgz#671748365751eb29091a037f820ba4a7ed43ec12"
+  integrity sha512-NZVSsVxEiqqLoaebPJ06l3Cs22v3Gy8uYSonFUoa7xP2UiCkB/lgZ+3GMTkEfNSwOsEVvYJiZ+O0THs5HyD6kw==
+
 create-ecdh@^4.0.0:
   version "4.0.4"
   resolved "https://registry.yarnpkg.com/create-ecdh/-/create-ecdh-4.0.4.tgz#d6e7f4bffa66736085a0762fd3a632684dabcc4e"

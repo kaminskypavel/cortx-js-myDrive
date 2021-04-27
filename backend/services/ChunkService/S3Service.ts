@@ -1,8 +1,8 @@
-import File, { FileInterface } from "../../models/file";
+import File, {FileInterface} from "../../models/file";
 import User, {UserInterface} from "../../models/user";
 import s3 from "../../db/s3";
 import env from "../../enviroment/env";
-import { Response, Request } from "express";
+import {Response, Request} from "express";
 import ChunkInterface from "./utils/ChunkInterface";
 import NotAuthorizedError from "../../utils/NotAuthorizedError";
 import NotFoundError from "../../utils/NotFoundError";
@@ -21,13 +21,13 @@ import fixStartChunkLength from "./utils/fixStartChunkLength";
 import fixEndChunkLength from "./utils/fixEndChunkLength";
 import getPrevIVS3 from "./utils/getPrevIVS3";
 import awaitStreamVideo from "./utils/awaitStreamVideo";
-import Folder, { FolderInterface } from "../../models/folder";
+import Folder, {FolderInterface} from "../../models/folder";
 import DbUtilFile from "../../db/utils/fileUtils/index";
 import s3Auth from "../../db/S3Personal";
 import addToStoageSize from "./utils/addToStorageSize";
 import subtractFromStorageSize from "./utils/subtractFromStorageSize";
 import ForbiddenError from "../../utils/ForbiddenError";
-import { ObjectID } from "mongodb";
+import {ObjectID} from "mongodb";
 
 const dbUtilsFile = new DbUtilFile();
 
@@ -37,20 +37,14 @@ class S3Service implements ChunkInterface {
 
     }
 
-    uploadFile = async(user: UserInterface, busboy: any, req: Request) => {
-
-        const password = user.getEncryptionKey(); 
-
+    uploadFile = async (user: UserInterface, busboy: any, req: Request) => {
+        const password = user.getEncryptionKey();
         if (!password) throw new ForbiddenError("Invalid Encryption Key")
-
         const initVect = crypto.randomBytes(16);
-
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
-
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
         const cipher = crypto.createCipheriv('aes256', CIPHER_KEY, initVect);
 
         const {file, filename, formData} = await getBusboyData(busboy);
-
         const parent = formData.get("parent") || "/"
         const parentList = formData.get("parentList") || "/";
         const size = formData.get("size") || ""
@@ -58,37 +52,37 @@ class S3Service implements ChunkInterface {
         let hasThumbnail = false;
         let thumbnailID = ""
         const isVideo = videoChecker(filename)
-
         const randomS3ID = uuid.v4();
 
         const s3Data: any = personalFile ? await user.decryptS3Data() : {};
         const bucketName = personalFile ? s3Data.bucket : env.s3Bucket;
 
         let metadata: any = {
-                owner: user._id,
-                parent,
-                parentList,
-                hasThumbnail,
-                thumbnailID,
-                isVideo,
-                size,
-                IV: initVect,
-                s3ID: randomS3ID,
+            owner: user._id,
+            parent,
+            parentList,
+            hasThumbnail,
+            thumbnailID,
+            isVideo,
+            size,
+            IV: initVect,
+            s3ID: randomS3ID,
         }
 
         if (personalFile) metadata = {...metadata, personalFile: true}
 
         const params = {
             Bucket: bucketName,
-            Body : file.pipe(cipher),
-            Key : randomS3ID
+            Body: file.pipe(cipher),
+            Key: randomS3ID
         };
 
+        console.log(11, params);
         await awaitUploadStreamS3(params, personalFile, s3Data);
-
+        console.log(22, params);
         const date = new Date();
         const encryptedFileSize = size;
-        
+
         const currentFile = new File({
             filename,
             uploadDate: date.toISOString(),
@@ -101,28 +95,28 @@ class S3Service implements ChunkInterface {
         await addToStoageSize(user, size, personalFile);
 
         const imageCheck = imageChecker(currentFile.filename);
- 
+
         if (currentFile.length < 15728640 && imageCheck) {
 
             const updatedFile = await createThumbnailAny(currentFile, filename, user);
 
             return updatedFile;
-           
+
         } else {
 
             return currentFile;
         }
-    } 
+    }
 
-    getFileWriteStream = async(user: UserInterface, file: FileInterface, parentFolder: FolderInterface, readStream: any) => {
+    getFileWriteStream = async (user: UserInterface, file: FileInterface, parentFolder: FolderInterface, readStream: any) => {
 
-        const password = user.getEncryptionKey(); 
+        const password = user.getEncryptionKey();
 
         if (!password) throw new ForbiddenError("Invalid Encryption Key")
 
         const initVect = crypto.randomBytes(16);
 
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
 
         const cipher = crypto.createCipheriv('aes256', CIPHER_KEY, initVect);
 
@@ -153,10 +147,10 @@ class S3Service implements ChunkInterface {
 
         const params = {
             Bucket: bucketName,
-            Body : readStream,
-            Key : file.metadata.s3ID
+            Body: readStream,
+            Key: file.metadata.s3ID
         };
-        
+
     }
 
     getS3AuthThumbnail = async (thumbnail: ThumbnailInterface, user: UserInterface) => {
@@ -167,7 +161,7 @@ class S3Service implements ChunkInterface {
             //console.log("s3 data", s3Data)
             return {s3Storage: s3Auth(s3Data.id, s3Data.key), bucket: s3Data.bucket};
         } else {
-        
+
             return {s3Storage: s3, bucket: env.s3Bucket};
         }
     }
@@ -180,12 +174,12 @@ class S3Service implements ChunkInterface {
             //console.log("s3 data", s3Data)
             return {s3Storage: s3Auth(s3Data.id, s3Data.key), bucket: s3Data.bucket};
         } else {
-        
+
             return {s3Storage: s3, bucket: env.s3Bucket};
         }
     }
 
-    downloadFile = async(user: UserInterface, fileID: string, res: Response) => { 
+    downloadFile = async (user: UserInterface, fileID: string, res: Response) => {
 
         const currentFile: FileInterface = await dbUtilsFile.getFileInfo(fileID, user._id);
 
@@ -199,13 +193,13 @@ class S3Service implements ChunkInterface {
 
         const IV = currentFile.metadata.IV.buffer as Buffer;
 
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
 
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
 
         res.set('Content-Type', 'binary/octet-stream');
         res.set('Content-Disposition', 'attachment; filename="' + currentFile.filename + '"');
-        res.set('Content-Length', currentFile.metadata.size.toString()); 
+        res.set('Content-Length', currentFile.metadata.size.toString());
 
         const params: any = {Bucket: bucket, Key: currentFile.metadata.s3ID!};
 
@@ -216,7 +210,7 @@ class S3Service implements ChunkInterface {
         await awaitStream(s3ReadStream.pipe(decipher), res, allStreamsToErrorCatch);
     }
 
-    getFileReadStream = async(user: UserInterface, fileID: string) => {
+    getFileReadStream = async (user: UserInterface, fileID: string) => {
 
         const currentFile: FileInterface = await dbUtilsFile.getFileInfo(fileID, user._id);
 
@@ -230,7 +224,7 @@ class S3Service implements ChunkInterface {
 
         const IV = currentFile.metadata.IV.buffer as Buffer;
 
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
 
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
 
@@ -241,13 +235,13 @@ class S3Service implements ChunkInterface {
         return s3ReadStream
     }
 
-    streamVideo = async(user: UserInterface, fileID: string, headers: any, res: Response, req: Request) => { 
+    streamVideo = async (user: UserInterface, fileID: string, headers: any, res: Response, req: Request) => {
 
         // To get this all working correctly with encryption and across
-        // All browsers took many days, tears, and some of my sanity. 
+        // All browsers took many days, tears, and some of my sanity.
         // Shoutout to Tyzoid for helping me with the decryption
         // And and helping me understand how the IVs work.
-        
+
         // P.S I hate safari >:(
         // Why do yall have to be weird with video streaming
         // 90% of the issues with this are only in Safari
@@ -265,21 +259,22 @@ class S3Service implements ChunkInterface {
         const fileSize = currentFile.metadata.size;
 
         const isPersonal = currentFile.metadata.personalFile!;
-                    
+
         const range = headers.range
         const parts = range.replace(/bytes=/, "").split("-")
         let start = parseInt(parts[0], 10)
-        let end = parts[1] 
+        let end = parts[1]
             ? parseInt(parts[1], 10)
-            : fileSize-1
-        const chunksize = (end-start)+1
+            : fileSize - 1
+        const chunksize = (end - start) + 1
         const IV = currentFile.metadata.IV.buffer as Buffer;
-                
+
         let head = {
             'Content-Range': 'bytes ' + start + '-' + end + '/' + fileSize,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunksize,
-            'Content-Type': 'video/mp4'}
+            'Content-Type': 'video/mp4'
+        }
 
         let currentIV = IV;
 
@@ -287,13 +282,13 @@ class S3Service implements ChunkInterface {
         let fixedEnd = currentFile.length;
 
         if (start === 0 && end === 1) {
-            
+
             // This is for Safari/iOS, Safari will request the first
-            // Byte before actually playing the video. Needs to be 
+            // Byte before actually playing the video. Needs to be
             // 16 bytes.
 
             fixedStart = 0;
-            fixedEnd = 15;    
+            fixedEnd = 15;
 
         } else {
 
@@ -303,19 +298,19 @@ class S3Service implements ChunkInterface {
 
             fixedStart = start % 16 === 0 ? start : fixStartChunkLength(start);
 
-            // I goofed up and forgot to add the encrypted file size to S3 data, 
+            // I goofed up and forgot to add the encrypted file size to S3 data,
             // It just used the normal file size :(
-            // So you'll notice only on the S3 route do i need to fix the end length 
+            // So you'll notice only on the S3 route do i need to fix the end length
             // To, this is because the other 2 routes use the encrypted file size
             // Which is always a multiple of 16. I cannot change this now
-            // Since previous versions will still have the issue, but 
-            // This is a simple fix luckily. 
+            // Since previous versions will still have the issue, but
+            // This is a simple fix luckily.
 
             fixedEnd = fixedEnd % 16 === 0 ? fixedEnd : fixEndChunkLength(fixedEnd)
         }
 
         if (+start === 0) {
-    
+
             // This math will not work if the start is 0
             // So if it is we just change fixed start back
             // To 0.
@@ -323,22 +318,22 @@ class S3Service implements ChunkInterface {
             fixedStart = 0;
         }
 
-        // We also need to calculate the difference between the start and the 
+        // We also need to calculate the difference between the start and the
         // Fixed start position. Since there will be an offset if the original
         // Request is not divisible by 16, it will not return the right part
         // Of the file, you will see how we do this in the awaitStreamVideo
         // code.
-        
+
         const differenceStart = start - fixedStart;
-        
-    
+
+
         if (fixedStart !== 0 && start !== 0) {
 
             // If this isn't the first request, the way AES256 works is when you try to
-            // Decrypt a certain part of the file that isn't the start, the IV will 
-            // Actually be the 16 bytes ahead of where you are trying to 
+            // Decrypt a certain part of the file that isn't the start, the IV will
+            // Actually be the 16 bytes ahead of where you are trying to
             // Start the decryption.
-        
+
             currentIV = await getPrevIVS3(fixedStart - 16, currentFile.metadata.s3ID!, isPersonal, user) as Buffer;
         }
 
@@ -348,7 +343,7 @@ class S3Service implements ChunkInterface {
 
         const s3ReadStream = s3Storage.getObject(params).createReadStream();
 
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
 
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, currentIV);
 
@@ -365,14 +360,14 @@ class S3Service implements ChunkInterface {
         s3ReadStream.destroy();
     }
 
-    getThumbnail = async(user: UserInterface, id: string) => { 
+    getThumbnail = async (user: UserInterface, id: string) => {
 
-         const password = user.getEncryptionKey();
+        const password = user.getEncryptionKey();
 
         if (!password) throw new ForbiddenError("Invalid Encryption Key")
 
         const thumbnail = await Thumbnail.findById(new ObjectID(id)) as ThumbnailInterface;
-    
+
         if (thumbnail.owner !== user._id.toString()) {
 
             throw new ForbiddenError('Thumbnail Unauthorized Error');
@@ -381,9 +376,9 @@ class S3Service implements ChunkInterface {
         const iv = thumbnail.IV!;
 
         const {s3Storage, bucket} = await this.getS3AuthThumbnail(thumbnail, user);
-        
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
-        
+
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
+
         const decipher = crypto.createDecipheriv("aes256", CIPHER_KEY, iv);
 
         const params: any = {Bucket: bucket, Key: thumbnail.s3ID!};
@@ -395,9 +390,9 @@ class S3Service implements ChunkInterface {
         const bufferData = await streamToBuffer(readStream.pipe(decipher), allStreamsToErrorCatch);
 
         return bufferData;
-    } 
+    }
 
-    getFullThumbnail = async(user: UserInterface, fileID: string, res: Response) => {
+    getFullThumbnail = async (user: UserInterface, fileID: string, res: Response) => {
 
         const userID = user._id;
 
@@ -416,8 +411,8 @@ class S3Service implements ChunkInterface {
 
         const readStream = s3Storage.getObject(params).createReadStream();
 
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
-    
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
+
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
 
         res.set('Content-Type', 'binary/octet-stream');
@@ -429,7 +424,7 @@ class S3Service implements ChunkInterface {
         await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
     }
 
-    getPublicDownload = async(fileID: string, tempToken: any, res: Response) => {
+    getPublicDownload = async (fileID: string, tempToken: any, res: Response) => {
 
         const file: FileInterface = await dbUtilsFile.getPublicFile(fileID);
 
@@ -446,15 +441,15 @@ class S3Service implements ChunkInterface {
         const IV = file.metadata.IV.buffer as Buffer;
 
         const {s3Storage, bucket} = await this.getS3Auth(file, user);
-        
+
         const params: any = {Bucket: bucket, Key: file.metadata.s3ID!};
 
         const readStream = s3Storage.getObject(params).createReadStream();
-        
-        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()        
+
+        const CIPHER_KEY = crypto.createHash('sha256').update(password).digest()
 
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
-    
+
         res.set('Content-Type', 'binary/octet-stream');
         res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
         res.set('Content-Length', file.metadata.size.toString());
@@ -468,14 +463,14 @@ class S3Service implements ChunkInterface {
         }
     }
 
-    deleteFile = async(userID: string, fileID: string) => {
+    deleteFile = async (userID: string, fileID: string) => {
 
         const file: FileInterface = await dbUtilsFile.getFileInfo(fileID, userID);
-    
+
         if (!file) throw new NotFoundError("Delete File Not Found Error");
 
         const user = await User.findById(userID) as UserInterface;
-    
+
         const {s3Storage, bucket} = await this.getS3Auth(file, user);
 
         if (file.metadata.thumbnailID) {
@@ -492,15 +487,15 @@ class S3Service implements ChunkInterface {
         await subtractFromStorageSize(userID, file.length, file.metadata.personalFile!);
     }
 
-    deleteFolder = async(userID: string, folderID: string, parentList: string[]) => {
+    deleteFolder = async (userID: string, folderID: string, parentList: string[]) => {
 
         const parentListString = parentList.toString()
-    
-        await Folder.deleteMany({"owner": userID, "parentList": { $all: parentList}})
+
+        await Folder.deleteMany({"owner": userID, "parentList": {$all: parentList}})
         await Folder.deleteMany({"owner": userID, "_id": folderID});
 
         const fileList = await dbUtilsFile.getFileListByParent(userID, parentListString);
-    
+
         if (!fileList) throw new NotFoundError("Delete File List Not Found");
 
         const user = await User.findById(userID) as UserInterface;
@@ -512,7 +507,7 @@ class S3Service implements ChunkInterface {
             const {s3Storage, bucket} = await this.getS3Auth(currentFile, user);
 
             try {
-                
+
                 if (currentFile.metadata.thumbnailID) {
 
                     const thumbnail = await Thumbnail.findById(currentFile.metadata.thumbnailID) as ThumbnailInterface;
@@ -520,7 +515,7 @@ class S3Service implements ChunkInterface {
                     await removeChunksS3(s3Storage, paramsThumbnail);
                     await Thumbnail.deleteOne({_id: currentFile.metadata.thumbnailID});
                 }
-                    
+
                 const params: any = {Bucket: bucket, Key: currentFile.metadata.s3ID!};
                 await removeChunksS3(s3Storage, params);
                 await File.deleteOne({_id: currentFile._id});
@@ -529,11 +524,11 @@ class S3Service implements ChunkInterface {
 
                 console.log("Could not delete file", currentFile.filename, currentFile._id);
             }
-           
-        } 
+
+        }
     }
 
-    deleteAll = async(userID: string) => {
+    deleteAll = async (userID: string) => {
 
         await Folder.deleteMany({"owner": userID});
 
@@ -545,7 +540,7 @@ class S3Service implements ChunkInterface {
 
         for (let i = 0; i < fileList.length; i++) {
             const currentFile = fileList[i];
-           
+
             const {s3Storage, bucket} = await this.getS3Auth(currentFile, user);
 
             try {
@@ -557,7 +552,7 @@ class S3Service implements ChunkInterface {
                     await removeChunksS3(s3Storage, paramsThumbnail);
                     await Thumbnail.deleteOne({_id: currentFile.metadata.thumbnailID});
                 }
-    
+
                 const params: any = {Bucket: bucket, Key: currentFile.metadata.s3ID!};
                 await removeChunksS3(s3Storage, params);
                 await File.deleteOne({_id: currentFile._id});

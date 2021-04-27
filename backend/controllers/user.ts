@@ -35,13 +35,13 @@ class UserController {
     }
 
     getUser = async(req: RequestType, res: Response) => {
-        
+
         try {
 
             const user = req.user!;
 
             res.send(user)
-    
+
         } catch (e) {
 
             console.log("\nGet User Route Error:", e.message);
@@ -55,7 +55,6 @@ class UserController {
         try {
 
             const body = req.body;
-            
             const currentUUID = req.headers.uuid as string;
 
             const {user, accessToken, refreshToken} = await UserProvider.login(body, currentUUID);
@@ -63,9 +62,9 @@ class UserController {
             createLoginCookie(res, accessToken, refreshToken);
 
             res.status(200).send({user});
-    
+
         } catch (e) {
-    
+
             console.log("\nLogin User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -104,20 +103,20 @@ class UserController {
 
             return;
         }
-        
+
         try {
-            
+
             const userID = req.user._id;
             const refreshToken = req.cookies["refresh-token"];
 
             await UserProvider.logout(userID, refreshToken);
 
             createLogoutCookie(res);
-    
+
             res.send();
-    
+
         } catch (e) {
-    
+
             console.log("\nLogout User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             createLogoutCookie(res);
@@ -136,11 +135,11 @@ class UserController {
             await UserProvider.logoutAll(userID);
 
             createLogoutCookie(res);
-    
+
             res.send();
-    
+
         } catch (e) {
-    
+
             console.log("\nLogout All User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -151,21 +150,17 @@ class UserController {
 
         if (env.createAcctBlocked) {
 
-            return await res.status(401).send()
+            return res.status(401).send()
         }
-        
+
         try {
-    
             const currentUUID = req.headers.uuid as string;
-
             const {user, accessToken, refreshToken} = await UserProvider.create(req.body, currentUUID);
-
             createLoginCookie(res, accessToken, refreshToken);
-    
             res.status(201).send({user})
-    
+
         } catch (e) {
-            
+
             console.log("\nCreate User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -178,24 +173,24 @@ class UserController {
 
             return;
         }
-    
+
         try {
-        
+
             const userID = req.user._id;
             const oldPassword = req.body.oldPassword;
             const newPassword = req.body.newPassword;
             const oldRefreshToken = req.cookies["refresh-token"];
-            
+
             const currentUUID = req.headers.uuid as string;
 
             const {accessToken, refreshToken} = await UserProvider.changePassword(userID, oldPassword, newPassword, oldRefreshToken, currentUUID);
-            
+
             createLoginCookie(res, accessToken, refreshToken);
 
             res.send();
-    
+
         } catch (e) {
-    
+
             console.log("\nChange Password User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
@@ -251,7 +246,7 @@ class UserController {
         try {
 
             const verifyToken = req.body.emailToken;
-            
+
             const currentUUID = req.headers.uuid as string;
 
             const user = await UserProvider.verifyEmail(verifyToken);
@@ -328,7 +323,7 @@ class UserController {
             res.status(code).send();
         }
     }
-    
+
     addName = async(req: RequestType, res: Response) => {
 
         if (!req.user) {
@@ -345,7 +340,7 @@ class UserController {
             res.send();
 
         } catch (e) {
-            
+
             console.log("\nAdd Name User Route Error:", e.message);
             const code = !e.code ? 500 : e.code >= 400 && e.code <= 599 ? e.code : 500;
             res.status(code).send();
