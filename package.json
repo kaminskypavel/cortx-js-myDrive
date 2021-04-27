@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "GNU General Public License v3.0",
   "engines": {
-    "node": "15.4.0"
+    "node": ">=15.4.0"
   },
   "scripts": {
     "server": "live-server public/",
@@ -17,7 +17,8 @@
     "build:webUISetup": "webpack --config webUISetup.config.js",
     "dev-server": "webpack-dev-server",
     "test": "NODE_ENV=test env-cmd -f ./config/test.env jest --config=jest.config.json --runInBand",
-    "start:dev": "NODE_ENV=development node dist/server/serverStart.js",
+    "start:dev-old": "cross-env NODE_ENV=development node dist/server/serverStart.js",
+    "start:dev": "cross-env NODE_ENV=development tsnd --rs --watch backend/**/* backend/server/serverStart.ts",
     "start:debug": "NODE_ENV=development node --inspect dist/server/serverStart.js",
     "start": "node dist/server/serverStart.js --env production",
     "create-indexes-database": "node serverUtils/createIndexes.js",
@@ -60,7 +61,7 @@
     "@types/sharp": "^0.25.0",
     "@types/uuid": "^7.0.2",
     "@types/validator": "^13.0.0",
-    "aws-sdk": "^2.657.0",
+    "aws-sdk": "^2.892.0",
     "axios": "^0.21.0",
     "babel-polyfill": "^6.26.0",
     "bcrypt": "^5.0.0",
@@ -109,6 +110,7 @@
     "supertest-session": "^4.1.0",
     "sweetalert2": "^9.7.2",
     "temp": "^0.9.1",
+    "ts-node-dev": "^1.1.6",
     "typescript": "^3.8.3",
     "uuid": "^3.4.0",
     "validator": "^12.2.0",
@@ -119,7 +121,7 @@
     "@typescript-eslint/parser": "^2.20.0",
     "babel-loader": "^8.0.6",
     "compression-webpack-plugin": "^5.0.0",
-    "cross-env": "^6.0.3",
+    "cross-env": "^7.0.3",
     "css-loader": "^3.4.2",
     "dart-sass": "^1.25.0",
     "env-cmd": "^10.1.0",
