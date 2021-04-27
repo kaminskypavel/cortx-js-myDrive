@@ -1,8 +1,10 @@
 # ![MyDrive Homepage](github_images/homepage.png)
 
-# MyDrive
+# MyDrive - Cortx Integration
 
-MyDrive is an Open Source cloud file storage server (Similar To Google Drive). Host myDrive on your own server or trusted platform and then access myDrive through your web browser. MyDrive uses mongoDB to store file/folder metadata, and supports multiple databases to store the file chunks, such as Amazon S3, the Filesystem, or just MongoDB. MyDrive is built using Node.js, and Typescript. The service now even supports Docker images! 
+MyDrive is an Open Source cloud file storage server (Similar To Google Drive). Host myDrive on your own server or trusted platform and then access myDrive through your web browser. MyDrive uses mongoDB to store file/folder metadata, and supports multiple databases to store the file chunks, such as Amazon S3, the Filesystem, or just MongoDB. MyDrive is built using Node.js, and Typescript. The service now even supports Docker images!
+
+*this is a demo repo to show how easy it is to integrate Cortx-sdk-js with any Typescript/Javascrip applicatiokn*
 
 [Main myDrive website](https://mydrive-storage.com/)
 
